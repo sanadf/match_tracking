@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Local media and generated outputs
+video/*
+!video/.gitkeep
+output/
+data/*.csv
+data/*.xlsx
+datasets/
+training_runs/
+
+# Models can be large; keep them local or use Git LFS.
+models/*
+!models/.gitkeep
+
+# OS/editor metadata
+.DS_Store
+*.swp
+.idea/
+.vscode/
+download_roboflow.py
+
+.venv_new/
+
+data/football_clean/
+
+runs/
+
+test_project-2/
+
+yolo*.pt
+
