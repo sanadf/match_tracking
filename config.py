@@ -1,19 +1,31 @@
-"""Default project configuration."""
+"""Default configuration values for local football analytics runs."""
 
-from pathlib import Path
+from __future__ import annotations
 
-DEFAULT_INPUT_VIDEO = Path("video/faisaly_match.mp4")
-DEFAULT_OUTPUT_VIDEO = Path("output/analyzed_match.mp4")
-DEFAULT_STATS_DIR = Path("output/stats")
+from analytics.models import CLASS_ID_TO_NAME, CLASS_NAME_TO_ID, REQUIRED_CLASS_NAMES
 
-TEAM_NAMES = ("Al Faisaly", "Hussein Irbid")
+DEFAULT_INPUT = "demo_vid.mp4"
+DEFAULT_OUTPUT = "output/demo_analyzed.mp4"
+DEFAULT_STATS_DIR = "output/stats"
+DEFAULT_MODEL_PATH = "models/football_detector_best.pt"
+DEFAULT_CONFIDENCE = 0.25
+DEFAULT_MAX_FRAMES = 300
 
-# Legacy color hints are kept for manual experiments only. The main pipeline
-# uses crop embeddings, motion history, and context instead of these thresholds.
 TEAM_COLORS = {
-    "Al Faisaly": (173, 216, 230),
-    "Hussein Irbid": (0, 255, 255),
+    "A": (40, 210, 80),
+    "B": (255, 160, 40),
+    "unknown": (220, 220, 220),
 }
 
-DEFAULT_FPS = 30
-MAX_MISSING_SECONDS = 30.0
+__all__ = [
+    "CLASS_ID_TO_NAME",
+    "CLASS_NAME_TO_ID",
+    "DEFAULT_CONFIDENCE",
+    "DEFAULT_INPUT",
+    "DEFAULT_MAX_FRAMES",
+    "DEFAULT_MODEL_PATH",
+    "DEFAULT_OUTPUT",
+    "DEFAULT_STATS_DIR",
+    "REQUIRED_CLASS_NAMES",
+    "TEAM_COLORS",
+]

@@ -17,7 +17,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--dataset", required=True, help="Raw or cleaned YOLO dataset root.")
     parser.add_argument("--workdir", default="training_runs/football_dataset", help="Prepared dataset/work directory.")
-    parser.add_argument("--copy-mode", choices=["copy", "symlink", "hardlink"], default="copy")
+    parser.add_argument("--copy-mode", choices=["copy", "symlink", "hardlink"], default="symlink")
     parser.add_argument("--augment", action="store_true", help="Add offline motion blur and lighting variants to train split.")
     parser.add_argument("--model", action="append", default=[], help="Single model checkpoint to train. Repeatable.")
     parser.add_argument("--models", nargs="+", default=None, help="Model checkpoints to train and compare.")
@@ -54,7 +54,7 @@ def main() -> int:
 
     cleaned = workdir / "cleaned"
     _log(f"Cleaning labels into final classes at: {cleaned}")
-    clean_report = clean_dataset(dataset, cleaned, copy_mode=args.copy_mode)
+    clean_report = clean_dataset(dataset, cleaned, copy_mode=args.copy_mode, progress_every=1000, logger=_log)
     clean_report_path = cleaned / "label_cleaning_report.json"
     save_report(clean_report, clean_report_path)
     _log(f"Cleaned report: {clean_report_path}")

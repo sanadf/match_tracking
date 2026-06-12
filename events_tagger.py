@@ -1,4 +1,4 @@
-"""Manual event tagger kept as a backup to automatic event detection."""
+"""Manual event tagging helper for match videos."""
 
 from __future__ import annotations
 
@@ -8,59 +8,69 @@ from pathlib import Path
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Manually tag backup football events from a video.")
-    parser.add_argument("--input", default="video/faisaly_match.mp4", help="Input match video path.")
-    parser.add_argument("--output", default="output/manual_events.csv", help="CSV file for tagged events.")
-    parser.add_argument("--team", default="Team 1", help="Team name to write for manual tags.")
+    parser = argparse.ArgumentParser(description="Tag match events while stepping through a video.")
+    parser.add_argument("--input", default="video/match.mp4", help="Video to review.")
+    parser.add_argument("--output", default="output/stats/manual_events.csv", help="CSV event output path.")
+    parser.add_argument("--headless", action="store_true", help="Create an empty event CSV without opening a window.")
     return parser.parse_args()
 
 
-def log_event(path: Path, timestamp: float, event_type: str, team: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    new_file = not path.exists()
-    with path.open("a", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
-        if new_file:
-            writer.writerow(["timestamp", "event_type", "team"])
-        writer.writerow([round(timestamp, 2), event_type, team])
-
-
 def main() -> int:
-    import cv2
-
     args = parse_args()
     output = Path(args.output)
-    capture = cv2.VideoCapture(args.input)
-    if not capture.isOpened():
-        raise FileNotFoundError(f"Could not open video: {args.input}")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    if args.headless:
+        _write_events(output, [])
+        return 0
 
-    fps = capture.get(cv2.CAP_PROP_FPS) or 30.0
+    try:
+        import cv2
+    except Exception as exc:
+        print(f"OpenCV unavailable: {exc}")
+        _write_events(output, [])
+        return 0
+
+    cap = cv2.VideoCapture(str(args.input))
+    if not cap.isOpened():
+        print(f"Could not open {args.input}; writing an empty event CSV.")
+        _write_events(output, [])
+        return 0
+
+    events: list[dict[str, object]] = []
     frame_index = 0
-    print("Press P for pass, S for shot, D for dribble, I for interception, Q to quit.")
-
-    while capture.isOpened():
-        ok, frame = capture.read()
+    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+    print("Keys: p=pass, s=shot, f=foul, c=corner, q=quit")
+    while True:
+        ok, frame = cap.read()
         if not ok:
             break
-        timestamp = frame_index / fps
-        cv2.imshow("Manual Event Tagger", frame)
-        key = cv2.waitKey(max(1, int(1000 / fps))) & 0xFF
-        if key == ord("p"):
-            log_event(output, timestamp, "pass", args.team)
-        elif key == ord("s"):
-            log_event(output, timestamp, "shot", args.team)
-        elif key == ord("d"):
-            log_event(output, timestamp, "dribble", args.team)
-        elif key == ord("i"):
-            log_event(output, timestamp, "interception", args.team)
-        elif key == ord("q"):
+        cv2.imshow("Manual event tagger", frame)
+        key = cv2.waitKey(0) & 0xFF
+        if key == ord("q"):
             break
+        event_type = {ord("p"): "pass", ord("s"): "shot", ord("f"): "foul", ord("c"): "corner"}.get(key)
+        if event_type:
+            events.append(
+                {
+                    "frame_index": frame_index,
+                    "timestamp": round(frame_index / fps, 3),
+                    "event_type": event_type,
+                    "description": "manual tag",
+                }
+            )
         frame_index += 1
-
-    capture.release()
+    cap.release()
     cv2.destroyAllWindows()
-    print(f"Manual events saved to {output}")
+    _write_events(output, events)
+    print(f"Wrote {len(events)} events to {output}")
     return 0
+
+
+def _write_events(path: Path, events: list[dict[str, object]]) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["frame_index", "timestamp", "event_type", "description"])
+        writer.writeheader()
+        writer.writerows(events)
 
 
 if __name__ == "__main__":

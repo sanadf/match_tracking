@@ -13,18 +13,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dataset", required=True, help="Source YOLO dataset root.")
     parser.add_argument("--output", default="data/football_clean", help="Output cleaned dataset root.")
     parser.add_argument("--keep-unknown", action="store_true", help="Fail instead of dropping unknown labels.")
-    parser.add_argument("--copy-mode", choices=["copy", "symlink", "hardlink"], default="copy")
+    parser.add_argument("--copy-mode", choices=["copy", "symlink", "hardlink"], default="symlink")
     parser.add_argument("--report", default=None, help="JSON inspection report for the cleaned dataset.")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    print(f"Cleaning labels from {Path(args.dataset)} to {Path(args.output)}", flush=True)
     report = clean_dataset(
         args.dataset,
         args.output,
         drop_unknown=not args.keep_unknown,
         copy_mode=args.copy_mode,
+        progress_every=1000,
+        logger=lambda message: print(f"[clean_labels] {message}", flush=True),
     )
     report_path = Path(args.report) if args.report else Path(args.output) / "label_cleaning_report.json"
     save_report(report, report_path)
